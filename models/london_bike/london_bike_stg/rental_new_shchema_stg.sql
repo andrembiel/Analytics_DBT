@@ -17,4 +17,3 @@ with rental_new_shchema_stg as  (
  FROM  {{ source('dev', 'rental_new_schema_source') }}
 )
 SELECT * FROM rental_new_shchema_stg
-limit 10 

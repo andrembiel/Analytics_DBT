@@ -8,4 +8,3 @@ with bike_station_stg as (
  )
 
 SELECT * from bike_station_stg
-limit 20
