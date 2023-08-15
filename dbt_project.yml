@@ -33,3 +33,5 @@ models:
   my_new_project:
     staging:
       materialized: view
+    intermidiate:
+       materialized: table

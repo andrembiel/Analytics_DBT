@@ -11,4 +11,4 @@ rental_old_schema as (
 
 SELECT * FROM rental_old_schema
 UNION ALL
-SELECT * FROM rental_new_schema
+SELECT * FROM rental_new_schema 
