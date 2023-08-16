@@ -1,6 +1,12 @@
+
+{{
+    config(
+        materialized='table'
+    )
+}}
 with bike_station_stg as (
     SELECT 
-       SUBSTR(id ,12 ) as id
+       CAST(SUBSTR(id ,12 ) as INT64) as id
       ,commonName as name
       ,lat
       ,lon
