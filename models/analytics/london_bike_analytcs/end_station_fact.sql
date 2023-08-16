@@ -7,9 +7,8 @@ WITH end_station_fact as (
         ,lat 
         ,lon
     FROM {{ ref('bike_rental_inter') }} as rnt
-    LEFT JOIN {{ ref('bike_station_stg') }} as bs
-      
-      on lower(rnt.start_station_name) = lower(bs.name)
+    LEFT JOIN {{ ref('bike_station_dim') }} as bs
+    on lower(rnt.end_station_name) = lower(bs.station_name)
     
 )
 
