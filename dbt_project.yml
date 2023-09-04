@@ -35,5 +35,5 @@ models:
       materialized: view
     intermidiate:
        materialized: view
-    analytics:
+    marts:
       materialized: table
