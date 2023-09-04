@@ -14,7 +14,11 @@ int_successeful_payments__grouped_by_order_id as (
 
 )
 
-SELECT * 
+SELECT 
+orders.order_id
+,orders.customer_id
+,order_placed_at
+,orde
 
 FROM  stg_jaffle_shop__orders as orders
 LEFT JOIN stg_jaffle_shop__customers USING (customer_id)
