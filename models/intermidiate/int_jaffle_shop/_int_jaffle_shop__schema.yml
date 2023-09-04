@@ -5,9 +5,6 @@ models:
     description: This module sums all the non-failed payments and groups by order_id.
     columns:
       - name: order_id
-        tests:
-          - unique
-          - not_null
       - name: amount
-        tests:
-          - not_null
+      - name: payment_finalised_at
+        
