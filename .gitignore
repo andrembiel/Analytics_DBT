@@ -2,8 +2,7 @@
 target/
 dbt_packages/
 logs/
-.models/.analytics
-.models/intermidiate/.london_bike_inter
-.models/staging/.london_bike_stg
+.models
 .README-bike.md
+
 
