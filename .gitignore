@@ -2,7 +2,7 @@
 target/
 dbt_packages/
 logs/
-.models/
+models/
 .README-bike.md
 
 
