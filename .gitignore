@@ -3,6 +3,10 @@ target/
 dbt_packages/
 logs/
 models/
+macros/
+scr/
+analitycs_dbt/
+snapshots/
 .README-bike.md
 
 
