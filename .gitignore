@@ -2,8 +2,9 @@
 target/
 dbt_packages/
 logs/
-macros/
-models/
-snapshots/
-tests/
+.models/.analytics
+.models/intermidiate/.london_bike_inter
+.models/staging/.london_bike_stg
+.README-bike.md
+
 README.md

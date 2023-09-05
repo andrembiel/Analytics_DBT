@@ -1,60 +1,120 @@
-# London Santander Bike Analysis with DBT
+# Jaffle Shop
 
-Welcome to the London Santander Bike Analysis project showcase! In this repository, I've demonstrated the power of DBT (Data Build Tool) to transform and combine data from various sources, creating insightful analyses.
+## 1. Project Name and Description
 
-## Project Overview
+**Project Name:** Jaffle Shop  
+**Description:** This project aims to refactor a SQL query using dbt best practices.
 
-This project showcases the utilization of DBT functionalities to transform and combine data from different sources, resulting in meaningful analyses and insights.
+## 2. Problem
+This projects aims to refactor a complex SQL query to improve performance and readability while aligning with dbt best practices.
 
-- **Project Goal:** The primary goal of this project is to create visualizations of London Santander bike rental schemas for analysis.
-- **Data Sources:** I've sourced data from London Santander bike rental information, Santander bike station information (with coordinate data), and hourly London weather data stored in BigQuery.
-- **Transformation and Orchestration:** The transformation and orchestration processes are applied using DBT, while visualization is built using Looker Studio.
-## Understanding the DBT Process 
+```sql
+WITH
+paid_orders AS (
+  SELECT
+    Orders.ID AS order_id,
+    Orders.USER_ID AS customer_id,
+    Orders.ORDER_DATE AS order_placed_at,
+    Orders.STATUS AS order_status,
+    p.total_amount_paid,
+    p.payment_finalized_date,
+    C.FIRST_NAME AS customer_first_name,
+    C.LAST_NAME AS customer_last_name
+  FROM
+    `myprojects-395815.dbt_andrebiel.jaffle_shop_orders` AS Orders
+  LEFT JOIN (
+    SELECT
+      ORDERID AS order_id,
+      MAX(CREATED) AS payment_finalized_date,
+      SUM(AMOUNT) / 100.0 AS total_amount_paid
+    FROM
+      `myprojects-395815.dbt_andrebiel.stripe_payments`
+    WHERE
+      STATUS <> 'fail'
+    GROUP BY 1
+  ) p ON orders.ID = p.order_id
+  LEFT JOIN `myprojects-395815.dbt_andrebiel.jaffle_shop_customers` C ON orders.USER_ID = C.ID
+),
 
-1. Please, visit the documentation that I generated: [DBT Models Doc-London Santander Bike](https://cloud.getdbt.com/accounts/189633/develop/3848704/docs/index.html#!/overview/my_new_project). In this documentation, I provide detailed infomration of each model, including model descriptions, column names, applied tests, primary keys, number of rows, and more.
+customer_orders AS (
+  SELECT
+    C.ID AS customer_id,
+    MIN(ORDER_DATE) AS first_order_date,
+    MAX(ORDER_DATE) AS most_recent_order_date,
+    COUNT(ORDERS.ID) AS number_of_orders
+  FROM
+    `myprojects-395815.dbt_andrebiel.jaffle_shop_customers` C
+  LEFT JOIN
+    `myprojects-395815.dbt_andrebiel.jaffle_shop_orders` AS Orders
+  ON
+    orders.USER_ID = C.ID
+  GROUP BY 1
+)
 
-2. Additionally, to find the SQL models used in DBT, navigate to the `models/` folder. For more information on the project's directory structure, read to the "Project Structure" section below.
+SELECT
+  p.*,
+  ROW_NUMBER() OVER (ORDER BY p.order_id) AS transaction_seq,
+  ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY p.order_id) AS customer_sales_seq,
+  CASE WHEN c.first_order_date = p.order_placed_at THEN 'new' ELSE 'return' END AS nvsr,
+  x.clv_bad AS customer_lifetime_value,
+  c.first_order_date AS fdos
+FROM paid_orders p
+LEFT JOIN customer_orders AS c USING (customer_id)
+LEFT OUTER JOIN (
+  SELECT
+    p.order_id,
+    SUM(t2.total_amount_paid) AS clv_bad
+  FROM paid_orders p
+  LEFT JOIN paid_orders t2
+  ON p.customer_id = t2.customer_id AND p.order_id >= t2.order_id
+  GROUP BY 1
+  ORDER BY p.order_id
+) x ON x.order_id = p.order_id
+ORDER BY order_id
+```
 
 
-## Project Highlights
+## 3. Solution
 
-The highlights of this project center around the effectiveness and usability of DBT:
+In order to refactor the query, the best approach is to break down the query into modules.
 
-- **Scalability:** DBT allows for scalable transformations, creating a reliable and organized data transformation process.
-- **Features:** Leveraging DBT features such as macros, Jinja, testing, and automated documentation significantly enhances the power and utility of the tool.
+### Folder Structure
 
-## Technologies Used
+Inside the `my_new_project` directory, we find a directory called 'module'. The 'Module' directory has three layers (sub-directories): Staging, Intermediate, and Marts.
 
-Apart from DBT, the project also utilizes:
+-   **Staging:** This folder contains modules with minimal transformations but without aggregations and joins. The materialization of this layer is set to 'view'.
+    
+-   **Intermediate:** Modules involving more complex transformations beyond the staging layer are stored here. These modules are also materialized as 'views'.
+    
+-   **Marts:** The marts layer is where all the modules come together to be materialized as 'tables'.
+    
+Each layer includes SQL files for modules and YAML files with schema information, descriptions, column names, and applied tests.
 
-- **BigQuery:** Data sets are stored in a schema within BigQuery.
-- **Looker Studio:** Dashboards and visualizations are displayed on Looker Studio.
-
-## Project Structure
-
-The repository's structure is divided into several key directories:
-
-- `models/`: This directory contains all the DBT models, showcasing the transformation process.
-  - `staging/`: Initial modular building blocks created from source data.
-  - `intermediate/`: Logic layers stacked to prepare staging models for joining into desired entities.
-  - `analytics/`: The final stage where modular components come together to provide a comprehensive view of important entities.
-
-## Instructions for Exploration
-
-To explore this project:
-
-1. Clone the repository to your local machine: `git clone https://github.com/andrembiel/london-bike-analysis.git`
-2. Setup and configure DBT according to the project structure.
-3. Run the DBT transformations using: `dbt run`
-4. Access the Looker Studio dashboard for a comprehensive analysis: [Looker Studio Dashboard](https://lookerstudio.google.com/reporting/0184bfa0-6ac0-4136-9843-bb980539370c)
-5. For detailed documentation of each model and associated information, visit: [DBT Project Documentation](https://cloud.getdbt.com/accounts/189633/develop/3848704/docs/index.html#!/overview/my_new_project). In order to navigate in the Documentation, please read the Project Structure information section described this file.
-
-## Results and Impact
-
-The project has resulted in a comprehensive dashboard on Looker Studio, offering valuable insights into London Santander bike rentals.
-
-## Connect with Me
-
-If you're interested in discussing this project, potential collaboration, or insights, feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/andrembiel)
-
-Thank you for exploring my DBT project!
+## 4. Folder Structure
+```
+my_new_project/
+│
+├── module/
+│   ├── staging/
+│   │   ├── stg_jaffle_shop
+│   │   |    ├──  _stg_jaffle_shop__models.yml
+│   │   |    ├──  _stg_jaffle_shop__source.yml
+│   │   |    ├──  stg_jaffle_shop__customers.sql
+│   │   |    ├──  stg_jaffle_shop__orders.sql
+│   │   ├── stg_stripe_payments
+|   |   |    ├── _stg__stripe_payments__source.yml
+│   │   |    ├── _stg_stripe_payments__models.yml
+│   │   |    ├── stg_stripe__payments.sql
+│   ├── intermediate/
+│   │   ├── int_jaffle_shop
+|   |   |    ├── _int_jaffle_shop__model.yml
+│   │   |    ├── int_successeful_payments__grouped_by_order_id.sql
+│   ├── marts/
+│   |   ├──  marts_jaffle_shop
+│   │   |   ├──  _marts_jaffle_shop__models.yml
+│   │   |   ├──  customers__first_order_date.sql
+│   │   |   ├──  orders__new_returning_customers.sql     
+│   │   |   ├──  orders__payment_sucess.sql
+├── dbt_project.yml
+└── README.md
+```
